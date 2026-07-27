@@ -1,3 +1,32 @@
+import { DiscordSDK } from "@discord/embedded-app-sdk";
+
+const DISCORD_CLIENT_ID = "1531182655092297868";
+
+let discordSdk = null;
+let discordConnected = false;
+
+async function initializeDiscord() {
+  const params = new URLSearchParams(window.location.search);
+
+  // Regular website visits do not have Discord's frame_id.
+  if (!params.has("frame_id")) {
+    console.info("Running in normal website mode.");
+    return;
+  }
+
+  try {
+    discordSdk = new DiscordSDK(DISCORD_CLIENT_ID);
+
+    await discordSdk.ready();
+
+    discordConnected = true;
+    console.info("Discord Activity connected.");
+  } catch (error) {
+    discordConnected = false;
+    console.error("Discord SDK connection failed:", error);
+  }
+}
+
 const FLAVOR_TRAITS = ["Sweet","Savory","Sour","Bitter","Smoky","Spicy"];
 
 const INGREDIENTS = {
@@ -290,3 +319,5 @@ function computeAndRenderResult(){
 }
 
 render();
+
+initializeDiscord();

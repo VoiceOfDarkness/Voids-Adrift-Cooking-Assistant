@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voids Adrift — Galley Simulator v4</title>
+<style>
+  :root{
+    --sky-deep:#1b2b3a;
+    --sky-mid:#2e4a5e;
+    --plank:#5c4632;
+    --plank-light:#7a5f42;
+    --parchment:#ece2c8;
+    --parchment-dim:#c9bd9c;
+    --ember:#d9713c;
+    --ember-dim:#a8552b;
+    --teal:#5fb3a3;
+    --bad:#c1543f;
+    --good:#5fa35f;
+    --ink:#2a2116;
+    font-family: "Georgia", "Iowan Old Style", serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,220,160,0.10), transparent 55%),
+      linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 55%, #24384a 100%);
+    color:var(--parchment);
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  header{text-align:center;margin-bottom:28px;}
+  header .eyebrow{
+    letter-spacing:.22em;text-transform:uppercase;font-size:11px;
+    color:var(--teal);font-family:Georgia, serif;margin-bottom:6px;
+  }
+  h1{
+    font-size:clamp(28px,4vw,40px);margin:0 0 6px;
+    color:var(--parchment);
+    text-shadow:0 2px 0 rgba(0,0,0,0.35);
+  }
+  header p{color:var(--parchment-dim);font-size:14.5px;max-width:560px;margin:0 auto;line-height:1.5;}
+
+  .patchnote{
+    max-width:560px;margin:16px auto 0;
+    background:rgba(217,113,60,0.14);
+    border:1px solid rgba(217,113,60,0.45);
+    border-radius:8px;padding:10px 14px;
+    font-size:12.5px;color:#f0d9b8;line-height:1.5;text-align:left;
+  }
+  .patchnote b{color:var(--ember);}
+
+  .board{
+    background:linear-gradient(180deg, var(--plank-light), var(--plank));
+    border:1px solid rgba(0,0,0,0.35);
+    border-radius:14px;
+    padding:22px;
+    box-shadow:0 14px 34px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .slots{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:22px;
+  }
+  @media(max-width:720px){ .slots{grid-template-columns:1fr;} }
+
+  .slot{
+    background:rgba(20,16,10,0.28);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px;
+    padding:14px;
+  }
+  .slot-label{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--parchment-dim);margin-bottom:8px;
+  }
+  select{
+    width:100%;padding:9px 10px;border-radius:6px;border:1px solid rgba(0,0,0,0.4);
+    background:var(--parchment);color:var(--ink);font-family:inherit;font-size:14px;
+    margin-bottom:10px;
+  }
+  .qrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .qrow span{font-size:12px;color:var(--parchment-dim);width:64px;flex-shrink:0;}
+  input[type=range]{flex:1;accent-color:var(--ember);}
+  .qval{
+    width:30px;text-align:center;font-weight:bold;color:var(--parchment);font-size:14px;
+  }
+  .swatch-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--parchment-dim);}
+  .swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,0.4);}
+
+  .divider{
+    height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    margin:20px 0;
+  }
+
+  .readout{
+    display:grid;grid-template-columns:1.1fr 1fr;gap:18px;
+  }
+  @media(max-width:720px){ .readout{grid-template-columns:1fr;} }
+
+  .panel{
+    background:rgba(20,16,10,0.28);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px;padding:16px 18px;
+  }
+  .panel h3{
+    margin:0 0 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);
+  }
+
+  .flavorbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;}
+  .flavorbar-row .fname{width:60px;flex-shrink:0;color:var(--parchment-dim);}
+  .flavorbar-track{flex:1;height:9px;background:rgba(0,0,0,0.35);border-radius:5px;overflow:hidden;}
+  .flavorbar-fill{height:100%;border-radius:5px;transition:width .2s ease;}
+  .flavorbar-row .fval{width:26px;text-align:right;font-weight:bold;}
+
+  .archetype-line{
+    display:flex;align-items:center;gap:10px;margin:10px 0 4px;
+    font-size:16px;font-weight:bold;
+  }
+  .archetype-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);}
+  .total-line{font-size:12.5px;color:var(--parchment-dim);}
+
+  .stagebox{
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(0,0,0,0.22);border-radius:8px;padding:10px 12px;margin-bottom:8px;
+  }
+  .stagebox .k{font-size:12px;color:var(--parchment-dim);}
+  .stagebox .v{font-size:15px;font-weight:bold;}
+  .tier-badge{
+    display:inline-block;padding:2px 9px;border-radius:5px;font-size:13px;font-weight:bold;
+    color:#1a1408;
+  }
+
+  .techrow{display:flex;align-items:center;gap:12px;margin-top:6px;}
+  .techrow input[type=range]{flex:1;}
+  .modnum{
+    width:44px;text-align:center;font-weight:bold;font-size:15px;
+    padding:3px 0;border-radius:5px;
+  }
+
+  .heal-final{
+    text-align:center;margin-top:14px;padding:14px 10px;
+    background:linear-gradient(180deg, rgba(95,163,163,0.16), rgba(95,163,163,0.04));
+    border:1px solid rgba(95,163,163,0.35);border-radius:10px;
+  }
+  .heal-final .amt{font-size:34px;font-weight:bold;color:var(--parchment);line-height:1;}
+  .heal-final .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-top:4px;}
+  .heal-final .sub{font-size:11.5px;color:var(--parchment-dim);margin-top:6px;line-height:1.4;}
+
+  .tiermap{
+    display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px;
+  }
+  .tiermap div{
+    text-align:center;font-size:10px;padding:5px 2px;border-radius:4px;
+    background:rgba(0,0,0,0.22);color:var(--parchment-dim);
+  }
+  .tiermap div.hit{
+    background:var(--ember);color:#1a1408;font-weight:bold;
+  }
+
+  footer{
+    text-align:center;margin-top:22px;font-size:11.5px;color:var(--parchment-dim);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Voids Adrift · Community Tool</div>
+    <h1>Galley Simulator</h1>
+    <p>Pick three ingredients, roll their quality, and dial in a technique modifier to see exactly what a real cook would produce at the station — including the actual heal you'd get from eating it.</p>
+    <div class="patchnote"><b>Updated:</b> Meal heal amounts have been lowered across the board. A Q10 meal used to heal 70 HP (70% of base max health) in one bite — now it heals 40. Everything below reflects the new numbers.</div>
+  </header>
+
+  <div class="board">
+    <div class="slots" id="slots"></div>
+
+    <div class="divider"></div>
+
+    <div class="readout">
+      <div class="panel">
+        <h3>Combined Flavor</h3>
+        <div id="flavorbars"></div>
+        <div class="archetype-line">
+          <span class="archetype-dot" id="archetypeDot"></span>
+          <span id="archetypeLabel">—</span>
+        </div>
+        <div class="total-line" id="totalLine">Total flavor: 0</div>
+      </div>
+
+      <div class="panel">
+        <h3>Cooking Result</h3>
+
+        <div class="stagebox">
+          <span class="k">Ingredient tier (uncapped)</span>
+          <span class="v" id="rawTier">Q1</span>
+        </div>
+        <div class="stagebox">
+          <span class="k">Ingredient cap (Q5 ceiling)</span>
+          <span class="v"><span class="tier-badge" id="cappedTier">Q1</span></span>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div class="k" style="font-size:12px;color:var(--parchment-dim);margin-bottom:4px;">
+            Technique modifier <span id="modLabel" style="color:var(--parchment);font-weight:bold;">+0</span> (range −4 to +5)
+          </div>
+          <div class="techrow">
+            <input type="range" id="modSlider" min="-4" max="5" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="stagebox" style="margin-top:12px;">
+          <span class="k">Final quality</span>
+          <span class="v"><span class="tier-badge" id="finalTierBadge">Q1</span></span>
+        </div>
+
+        <div class="tiermap" id="tiermap"></div>
+
+        <div class="heal-final">
+          <div class="amt" id="healAmt">4</div>
+          <div class="lbl">HP restored on eat</div>
+          <div class="sub" id="healSub"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Numbers are computed with the exact same shared formulas as the live game (FoodDefs.ComputeFlavor, MealDefs.CapIngredientTier, MealDefs.QualityTiers) — not an approximation.</footer>
+</div>
+
+<script>
+const FLAVOR_TRAITS = ["Sweet","Savory","Sour","Bitter","Smoky","Spicy"];
+
+const TRAIT_COLOR = {
+  Sweet:"#e6a5c8", Savory:"#be8c5a", Sour:"#d2e664",
+  Bitter:"#6e9a5a", Smoky:"#82644f", Spicy:"#dc5a3c"
+};
+
+const ARCHETYPES = {
+  Sweet:  { label:"Sweet Treat", color:"#ebaac8" },
+  Savory: { label:"Hearty Meal", color:"#be8c5a" },
+  Sour:   { label:"Tangy Bite",  color:"#d2e664" },
+  Bitter: { label:"Bitter Brew", color:"#6e9a5a" },
+  Smoky:  { label:"Smoked Plate",color:"#826450" },
+  Spicy:  { label:"Spicy Skewer",color:"#dc5a3c" }
+};
+
+const INGREDIENTS = {
+  MantaMeat:       { label:"Manta Meat",         color:"#b45a5a", flavorShape:{Savory:4, Smoky:1} },
+  ReefFishFillet:  { label:"Reef Fish Fillet",   color:"#b4c8d7", flavorShape:{Savory:5, Sour:1} },
+  SundropBerry:    { label:"Sundrop Berry",      color:"#f08c28", flavorShape:{Sweet:4, Sour:1} },
+  WildrootTuber:   { label:"Wildroot Tuber",     color:"#64462d", flavorShape:{Savory:3, Bitter:1} },
+  HoneycombChunk:  { label:"Honeycomb Chunk",    color:"#ebbe28", flavorShape:{Sweet:5, Savory:1} },
+  SaltedJerkyStrip:{ label:"Salted Jerky Strip", color:"#782d23", flavorShape:{Savory:4, Smoky:1} },
+  GlowcapMushroom: { label:"Glowcap Mushroom",   color:"#5adcd2", flavorShape:{Bitter:3, Savory:1} },
+  BitterleafGreen: { label:"Bitterleaf Green",   color:"#3c823c", flavorShape:{Bitter:5, Sour:1} },
+  CitrusPod:       { label:"Citrus Pod",         color:"#c8e13c", flavorShape:{Sour:5, Sweet:1} },
+  EmberPepper:     { label:"Ember Pepper",       color:"#dc3228", flavorShape:{Spicy:5, Savory:1} },
+  CustardFruit:    { label:"Custard Fruit",      color:"#c8aadc", flavorShape:{Sweet:3, Savory:1} },
+};
+
+// -- Shared formulas, mirrored exactly from the live scripts --
+
+function totalFlavorForQuality(q){ return q + 2; } // FoodDefs
+
+function computeFlavor(baseId, quality){
+  const def = INGREDIENTS[baseId];
+  if (!def) return {};
+  const total = totalFlavorForQuality(quality);
+  const traitsInOrder = FLAVOR_TRAITS.filter(t => def.flavorShape[t] != null);
+  const weightSum = traitsInOrder.reduce((s,t)=> s + def.flavorShape[t], 0);
+  const result = {};
+  let allocated = 0;
+  traitsInOrder.forEach((t, i) => {
+    if (i === traitsInOrder.length - 1){
+      result[t] = total - allocated;
+    } else {
+      const share = Math.floor(total * (def.flavorShape[t] / weightSum) + 0.5);
+      result[t] = share;
+      allocated += share;
+    }
+  });
+  return result;
+}
+
+const QUALITY_TIER_THRESHOLDS = [
+  {tier:1,minTotal:0},{tier:2,minTotal:7},{tier:3,minTotal:14},{tier:4,minTotal:21},{tier:5,minTotal:28},
+  {tier:6,minTotal:35},{tier:7,minTotal:42},{tier:8,minTotal:49},{tier:9,minTotal:56},{tier:10,minTotal:63},
+];
+const INGREDIENT_QUALITY_CAP = 5; // MealDefs
+const QUALITY_HEAL_BONUS_PER_TIER = 4; // MealDefs — lowered from 7
+const MIN_TECHNIQUE_MODIFIER = -4, MAX_TECHNIQUE_MODIFIER = 5; // CookServer
+
+function tierFromTotal(total){
+  let best = QUALITY_TIER_THRESHOLDS[0];
+  for (const t of QUALITY_TIER_THRESHOLDS){
+    if (total >= t.minTotal) best = t;
+  }
+  return best.tier;
+}
+function healForTier(tier){ return Math.floor(QUALITY_HEAL_BONUS_PER_TIER * tier + 0.5); }
+
+// -- UI --
+
+const slotState = [
+  { id:"MantaMeat", q:5 },
+  { id:"EmberPepper", q:5 },
+  { id:"HoneycombChunk", q:5 },
+];
+
+const slotsEl = document.getElementById("slots");
+function buildSlots(){
+  slotsEl.innerHTML = "";
+  slotState.forEach((slot, idx) => {
+    const div = document.createElement("div");
+    div.className = "slot";
+    const opts = Object.keys(INGREDIENTS).map(k =>
+      `<option value="${k}" ${k===slot.id?"selected":""}>${INGREDIENTS[k].label}</option>`
+    ).join("");
+    div.innerHTML = `
+      <div class="slot-label">Slot ${idx+1}</div>
+      <select data-idx="${idx}" class="ingSelect">${opts}</select>
+      <div class="qrow">
+        <span>Quality</span>
+        <input type="range" min="1" max="10" step="1" value="${slot.q}" class="qSlider" data-idx="${idx}">
+        <span class="qval" data-idx="${idx}">${slot.q}</span>
+      </div>
+      <div class="swatch-row">
+        <span class="swatch" style="background:${INGREDIENTS[slot.id].color}"></span>
+        <span>${Object.entries(INGREDIENTS[slot.id].flavorShape).map(([t,w])=>`${t} ${w}`).join(" · ")}</span>
+      </div>
+    `;
+    slotsEl.appendChild(div);
+  });
+
+  slotsEl.querySelectorAll(".ingSelect").forEach(sel => {
+    sel.addEventListener("change", e => {
+      slotState[+e.target.dataset.idx].id = e.target.value;
+      buildSlots();
+      recompute();
+    });
+  });
+  slotsEl.querySelectorAll(".qSlider").forEach(sl => {
+    sl.addEventListener("input", e => {
+      slotState[+e.target.dataset.idx].q = +e.target.value;
+      slotsEl.querySelector(`.qval[data-idx="${e.target.dataset.idx}"]`).textContent = e.target.value;
+      recompute();
+    });
+  });
+}
+
+const flavorbarsEl = document.getElementById("flavorbars");
+const archetypeDot = document.getElementById("archetypeDot");
+const archetypeLabel = document.getElementById("archetypeLabel");
+const totalLine = document.getElementById("totalLine");
+const rawTierEl = document.getElementById("rawTier");
+const cappedTierEl = document.getElementById("cappedTier");
+const modSlider = document.getElementById("modSlider");
+const modLabel = document.getElementById("modLabel");
+const finalTierBadge = document.getElementById("finalTierBadge");
+const tiermapEl = document.getElementById("tiermap");
+const healAmt = document.getElementById("healAmt");
+const healSub = document.getElementById("healSub");
+
+modSlider.addEventListener("input", recompute);
+
+function tierColor(tier){
+  // low tiers muddier, high tiers brighter ember -> teal blend
+  const stops = ["#8a6a4a","#9a7a4a","#ab8a48","#bf9840","#d9a238",
+                 "#e0973a","#e08a44","#dc7a52","#d66a63","#5fb3a3"];
+  return stops[Math.max(0,Math.min(9,tier-1))];
+}
+
+function recompute(){
+  const combined = {};
+  FLAVOR_TRAITS.forEach(t => combined[t] = 0);
+  slotState.forEach(slot => {
+    const f = computeFlavor(slot.id, slot.q);
+    Object.entries(f).forEach(([t,v]) => combined[t] += v);
+  });
+
+  const maxVal = Math.max(1, ...Object.values(combined));
+  flavorbarsEl.innerHTML = FLAVOR_TRAITS.map(t => `
+    <div class="flavorbar-row">
+      <span class="fname">${t}</span>
+      <div class="flavorbar-track"><div class="flavorbar-fill" style="width:${(combined[t]/maxVal)*100}%; background:${TRAIT_COLOR[t]}"></div></div>
+      <span class="fval">${combined[t]}</span>
+    </div>
+  `).join("");
+
+  let bestTrait = FLAVOR_TRAITS[0], bestVal = -Infinity;
+  FLAVOR_TRAITS.forEach(t => { if (combined[t] > bestVal){ bestVal = combined[t]; bestTrait = t; } });
+  const archetype = ARCHETYPES[bestTrait];
+  archetypeDot.style.background = archetype.color;
+  archetypeLabel.textContent = archetype.label;
+
+  const total = FLAVOR_TRAITS.reduce((s,t)=> s + combined[t], 0);
+  totalLine.textContent = `Total flavor: ${total}`;
+
+  const rawTier = tierFromTotal(total);
+  const cappedTier = Math.min(rawTier, INGREDIENT_QUALITY_CAP);
+  rawTierEl.textContent = `Q${rawTier}${rawTier>INGREDIENT_QUALITY_CAP ? " (would be, uncapped)" : ""}`;
+  cappedTierEl.textContent = `Q${cappedTier}`;
+  cappedTierEl.style.background = tierColor(cappedTier);
+
+  const mod = +modSlider.value;
+  modLabel.textContent = (mod>0?"+":"") + mod;
+  modLabel.style.color = mod>0?"#8fd98f": mod<0?"#e08a7a":"var(--parchment)";
+
+  const finalTier = Math.max(1, Math.min(10, cappedTier + mod));
+  finalTierBadge.textContent = `Q${finalTier}`;
+  finalTierBadge.style.background = tierColor(finalTier);
+
+  tiermapEl.innerHTML = Array.from({length:10}, (_,i)=>i+1).map(t =>
+    `<div class="${t===finalTier?"hit":""}">${t}</div>`
+  ).join("");
+
+  const heal = healForTier(finalTier);
+  healAmt.textContent = heal;
+  healSub.textContent = `Q${finalTier} meal · ${QUALITY_HEAL_BONUS_PER_TIER} HP per tier (was 7 before the rebalance) · max possible is now ${healForTier(10)} HP at Q10`;
+}
+
+buildSlots();
+recompute();
+</script>
+</body>
+</html>

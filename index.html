@@ -2,662 +2,430 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Galley Calculator — Voids Adrift</title>
+<title>Voids Adrift — Galley Simulator v4</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Spectral:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --sky-deep:#1b2b3a;
+    --sky-mid:#2e4a5e;
+    --plank:#5c4632;
+    --plank-light:#7a5f42;
+    --parchment:#ece2c8;
+    --parchment-dim:#c9bd9c;
+    --ember:#d9713c;
+    --ember-dim:#a8552b;
+    --teal:#5fb3a3;
+    --bad:#c1543f;
+    --good:#5fa35f;
+    --ink:#2a2116;
+    font-family: "Georgia", "Iowan Old Style", serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,220,160,0.10), transparent 55%),
+      linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 55%, #24384a 100%);
+    color:var(--parchment);
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  header{text-align:center;margin-bottom:28px;}
+  header .eyebrow{
+    letter-spacing:.22em;text-transform:uppercase;font-size:11px;
+    color:var(--teal);font-family:Georgia, serif;margin-bottom:6px;
+  }
+  h1{
+    font-size:clamp(28px,4vw,40px);margin:0 0 6px;
+    color:var(--parchment);
+    text-shadow:0 2px 0 rgba(0,0,0,0.35);
+  }
+  header p{color:var(--parchment-dim);font-size:14.5px;max-width:560px;margin:0 auto;line-height:1.5;}
 
-:root{
-  --deep:#0f2430;
-  --deep2:#16323f;
-  --parch:#ece2cc;
-  --parch2:#ddd0ae;
-  --ink:#20180f;
-  --rust:#b3572e;
-  --rust-dim:#8a4526;
-  --teal:#4a8888;
-  --gold:#c9a24b;
-  --line: rgba(32,24,15,0.18);
-}
-*{box-sizing:border-box;}
-html,body{overflow-x:hidden;max-width:100%;}
-body{
-  margin:0;
-  background:var(--deep);
-  font-family:'Spectral',serif;
-  color:var(--ink);
-  padding:32px 16px 60px;
-}
-.wrap{max-width:960px;margin:0 auto;width:100%;}
+  .patchnote{
+    max-width:560px;margin:16px auto 0;
+    background:rgba(217,113,60,0.14);
+    border:1px solid rgba(217,113,60,0.45);
+    border-radius:8px;padding:10px 14px;
+    font-size:12.5px;color:#f0d9b8;line-height:1.5;text-align:left;
+  }
+  .patchnote b{color:var(--ember);}
 
-header{
-  text-align:center;
-  color:var(--parch);
-  margin-bottom:28px;
-}
-header .eyebrow{
-  font-family:'Space Mono',monospace;
-  font-size:0.72rem;
-  letter-spacing:3px;
-  text-transform:uppercase;
-  color:var(--gold);
-  margin-bottom:6px;
-}
-header h1{
-  font-family:'Fraunces',serif;
-  font-weight:700;
-  font-size:2.4rem;
-  margin:0;
-}
-header p{
-  font-size:0.92rem;
-  color:#a9bcc4;
-  margin:8px 0 0;
-}
+  .board{
+    background:linear-gradient(180deg, var(--plank-light), var(--plank));
+    border:1px solid rgba(0,0,0,0.35);
+    border-radius:14px;
+    padding:22px;
+    box-shadow:0 14px 34px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
 
-.layout{
-  display:grid;
-  grid-template-columns:1.15fr 0.85fr;
-  gap:22px;
-  align-items:start;
-}
-@media (max-width:800px){ .layout{grid-template-columns:1fr;} }
+  .slots{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:22px;
+  }
+  @media(max-width:720px){ .slots{grid-template-columns:1fr;} }
 
-.panel{
-  background:var(--parch);
-  border-radius:8px;
-  padding:26px 28px;
-  border-left:8px solid var(--deep2);
-  min-width:0;
-}
-@media (max-width:480px){
-  .panel{padding:20px 16px;}
-  body{padding:24px 8px 48px;}
-}
-.panel h2{
-  font-family:'Fraunces',serif;
-  font-size:1.1rem;
-  font-weight:600;
-  margin:0 0 16px;
-}
+  .slot{
+    background:rgba(20,16,10,0.28);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px;
+    padding:14px;
+  }
+  .slot-label{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--parchment-dim);margin-bottom:8px;
+  }
+  select{
+    width:100%;padding:9px 10px;border-radius:6px;border:1px solid rgba(0,0,0,0.4);
+    background:var(--parchment);color:var(--ink);font-family:inherit;font-size:14px;
+    margin-bottom:10px;
+  }
+  .qrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .qrow span{font-size:12px;color:var(--parchment-dim);width:64px;flex-shrink:0;}
+  input[type=range]{flex:1;accent-color:var(--ember);}
+  .qval{
+    width:30px;text-align:center;font-weight:bold;color:var(--parchment);font-size:14px;
+  }
+  .swatch-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--parchment-dim);}
+  .swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,0.4);}
 
-.slot-row{
-  display:grid;
-  grid-template-columns:24px 1fr;
-  grid-template-areas:
-    "num select"
-    "gap qty";
-  align-items:center;
-  column-gap:10px;
-  row-gap:10px;
-  margin-bottom:16px;
-  padding-bottom:16px;
-  border-bottom:1px solid var(--line);
-}
-.slot-row:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
-.slot-num{
-  grid-area:num;
-  font-family:'Space Mono',monospace;
-  font-size:0.8rem;
-  color:var(--rust-dim);
-  text-align:center;
-}
-.slot-select{grid-area:select;min-width:0;}
-select{
-  width:100%;
-  font-family:'Spectral',serif;
-  font-size:0.95rem;
-  padding:8px 10px;
-  border-radius:4px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,0.5);
-  color:var(--ink);
-}
-.qty-wrap{
-  grid-area:qty;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
-}
-.qty-wrap input[type=range]{
-  flex:1 1 auto;
-  min-width:0;
-  width:100%;
-  accent-color:var(--rust);
-}
-.qty-val{
-  font-family:'Space Mono',monospace;
-  font-size:0.85rem;
-  width:26px;
-  flex-shrink:0;
-  text-align:right;
-}
+  .divider{
+    height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    margin:20px 0;
+  }
 
-.control-block{margin-top:20px;}
-.control-block label{
-  display:block;
-  font-family:'Space Mono',monospace;
-  font-size:0.68rem;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  color:var(--rust-dim);
-  margin-bottom:8px;
-}
-.method-btns{display:flex;gap:8px;}
-.method-btn{
-  flex:1;
-  padding:10px 8px;
-  text-align:center;
-  border-radius:4px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,0.35);
-  cursor:pointer;
-  font-family:'Fraunces',serif;
-  font-weight:600;
-  font-size:0.92rem;
-  transition:background 0.15s, border-color 0.15s;
-}
-.method-btn.active{
-  background:var(--deep2);
-  color:var(--parch);
-  border-color:var(--deep2);
-}
-.mod-wrap{display:flex;align-items:center;gap:12px;min-width:0;}
-.mod-wrap input[type=range]{flex:1 1 auto;min-width:0;width:100%;accent-color:var(--rust);}
-.mod-val{
-  font-family:'Space Mono',monospace;
-  font-size:1rem;
-  font-weight:bold;
-  width:34px;
-  text-align:center;
-  color:var(--deep2);
-}
-/* results panel */
-.result-tag{
-  font-family:'Space Mono',monospace;
-  font-size:0.68rem;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  color:var(--rust);
-  margin-bottom:4px;
-}
-.dish-name{
-  font-family:'Fraunces',serif;
-  font-weight:700;
-  font-size:1.7rem;
-  margin:0 0 4px;
-}
-.dish-sub{
-  font-size:0.88rem;
-  color:#3a2f22;
-  margin-bottom:18px;
-}
+  .readout{
+    display:grid;grid-template-columns:1.1fr 1fr;gap:18px;
+  }
+  @media(max-width:720px){ .readout{grid-template-columns:1fr;} }
 
-.tier-track{
-  display:flex;
-  gap:3px;
-  margin-bottom:6px;
-}
-.tier-seg{
-  flex:1;
-  height:14px;
-  border-radius:2px;
-  background:var(--line);
-}
-.tier-seg.base-fill{background:var(--gold);}
-.tier-seg.bonus-fill{background:var(--rust);}
-.tier-caption{
-  display:flex;
-  justify-content:space-between;
-  font-family:'Space Mono',monospace;
-  font-size:0.66rem;
-  color:#5f5e5a;
-  margin-bottom:18px;
-}
+  .panel{
+    background:rgba(20,16,10,0.28);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px;padding:16px 18px;
+  }
+  .panel h3{
+    margin:0 0 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal);
+  }
 
-.stat-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:18px;
-}
-.stat-card{
-  background:rgba(255,255,255,0.4);
-  border-radius:4px;
-  padding:10px 12px;
-}
-.stat-label{
-  font-family:'Space Mono',monospace;
-  font-size:0.62rem;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  color:var(--rust-dim);
-  margin-bottom:3px;
-}
-.stat-value{
-  font-family:'Fraunces',serif;
-  font-weight:700;
-  font-size:1.25rem;
-}
+  .flavorbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;}
+  .flavorbar-row .fname{width:60px;flex-shrink:0;color:var(--parchment-dim);}
+  .flavorbar-track{flex:1;height:9px;background:rgba(0,0,0,0.35);border-radius:5px;overflow:hidden;}
+  .flavorbar-fill{height:100%;border-radius:5px;transition:width .2s ease;}
+  .flavorbar-row .fval{width:26px;text-align:right;font-weight:bold;}
 
-.buff-box{
-  background:var(--deep2);
-  color:var(--parch);
-  border-radius:5px;
-  padding:14px 16px;
-  margin-bottom:14px;
-}
-.buff-box .label{
-  font-family:'Space Mono',monospace;
-  font-size:0.64rem;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  color:var(--gold);
-  margin-bottom:6px;
-}
-.buff-box .value{
-  font-family:'Fraunces',serif;
-  font-weight:600;
-  font-size:1.05rem;
-  margin-bottom:2px;
-}
-.buff-box .sub{opacity:0.85;font-size:0.82rem;}
+  .archetype-line{
+    display:flex;align-items:center;gap:10px;margin:10px 0 4px;
+    font-size:16px;font-weight:bold;
+  }
+  .archetype-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);}
+  .total-line{font-size:12.5px;color:var(--parchment-dim);}
 
-.heal-box{
-  background:rgba(255,255,255,0.4);
-  border-radius:5px;
-  padding:14px 16px;
-  font-size:0.88rem;
-  line-height:1.5;
-}
-.heal-box b{color:var(--deep2);}
+  .stagebox{
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(0,0,0,0.22);border-radius:8px;padding:10px 12px;margin-bottom:8px;
+  }
+  .stagebox .k{font-size:12px;color:var(--parchment-dim);}
+  .stagebox .v{font-size:15px;font-weight:bold;}
+  .tier-badge{
+    display:inline-block;padding:2px 9px;border-radius:5px;font-size:13px;font-weight:bold;
+    color:#1a1408;
+  }
 
-.notice-box{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  background:rgba(179,87,46,0.12);
-  border:1px solid rgba(179,87,46,0.45);
-  border-radius:5px;
-  padding:11px 14px;
-  margin-bottom:16px;
-  font-size:0.85rem;
-  line-height:1.45;
-  color:var(--rust-dim);
-}
-.notice-box .notice-icon{
-  font-family:'Space Mono',monospace;
-  font-weight:bold;
-  font-size:0.85rem;
-  flex-shrink:0;
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  background:var(--rust);
-  color:var(--parch);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.notice-box b{color:var(--ink);}
+  .techrow{display:flex;align-items:center;gap:12px;margin-top:6px;}
+  .techrow input[type=range]{flex:1;}
+  .modnum{
+    width:44px;text-align:center;font-weight:bold;font-size:15px;
+    padding:3px 0;border-radius:5px;
+  }
 
-.flavor-bars{margin-top:6px;}
-.flavor-row{
-  display:grid;
-  grid-template-columns:70px 1fr 34px;
-  align-items:center;
-  gap:8px;
-  margin-bottom:6px;
-}
-.flavor-label{
-  font-family:'Space Mono',monospace;
-  font-size:0.68rem;
-  color:#5f5e5a;
-}
-.flavor-track{
-  height:10px;
-  background:var(--line);
-  border-radius:2px;
-  overflow:hidden;
-}
-.flavor-fill{
-  height:100%;
-  background:var(--teal);
-}
-.flavor-fill.dominant{background:var(--rust);}
-.flavor-num{
-  font-family:'Space Mono',monospace;
-  font-size:0.68rem;
-  text-align:right;
-}
+  .heal-final{
+    text-align:center;margin-top:14px;padding:14px 10px;
+    background:linear-gradient(180deg, rgba(95,163,163,0.16), rgba(95,163,163,0.04));
+    border:1px solid rgba(95,163,163,0.35);border-radius:10px;
+  }
+  .heal-final .amt{font-size:34px;font-weight:bold;color:var(--parchment);line-height:1;}
+  .heal-final .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-top:4px;}
+  .heal-final .sub{font-size:11.5px;color:var(--parchment-dim);margin-top:6px;line-height:1.4;}
+
+  .tiermap{
+    display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px;
+  }
+  .tiermap div{
+    text-align:center;font-size:10px;padding:5px 2px;border-radius:4px;
+    background:rgba(0,0,0,0.22);color:var(--parchment-dim);
+  }
+  .tiermap div.hit{
+    background:var(--ember);color:#1a1408;font-weight:bold;
+  }
+
+  footer{
+    text-align:center;margin-top:22px;font-size:11.5px;color:var(--parchment-dim);
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Voids Adrift</div>
-    <h1>Galley Calculator</h1>
-    <p>Live off the current cooking formulas: ingredient flavor, quality tiers, technique scaling, and Well Fed buffs.</p>
+    <div class="eyebrow">Voids Adrift · Community Tool</div>
+    <h1>Galley Simulator</h1>
+    <p>Pick three ingredients, roll their quality, and dial in a technique modifier to see exactly what a real cook would produce at the station — including the actual heal you'd get from eating it.</p>
+    <div class="patchnote"><b>Updated:</b> Meal heal amounts have been lowered across the board. A Q10 meal used to heal 70 HP (70% of base max health) in one bite — now it heals 40. Everything below reflects the new numbers.</div>
   </header>
 
-  <div class="layout">
-    <div class="panel">
-      <h2>Ingredients</h2>
-      <div id="slots"></div>
+  <div class="board">
+    <div class="slots" id="slots"></div>
 
-      <div class="control-block">
-        <label>Cooking method</label>
-        <div class="method-btns" id="methodBtns"></div>
+    <div class="divider"></div>
+
+    <div class="readout">
+      <div class="panel">
+        <h3>Combined Flavor</h3>
+        <div id="flavorbars"></div>
+        <div class="archetype-line">
+          <span class="archetype-dot" id="archetypeDot"></span>
+          <span id="archetypeLabel">—</span>
+        </div>
+        <div class="total-line" id="totalLine">Total flavor: 0</div>
       </div>
 
-      <div class="control-block">
-        <label>Technique modifier (minigame result)</label>
-        <div class="mod-wrap">
-          <input type="range" id="modSlider" min="-4" max="5" step="1" value="0">
-          <div class="mod-val" id="modVal">0</div>
+      <div class="panel">
+        <h3>Cooking Result</h3>
+
+        <div class="stagebox">
+          <span class="k">Ingredient tier (uncapped)</span>
+          <span class="v" id="rawTier">Q1</span>
+        </div>
+        <div class="stagebox">
+          <span class="k">Ingredient cap (Q5 ceiling)</span>
+          <span class="v"><span class="tier-badge" id="cappedTier">Q1</span></span>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div class="k" style="font-size:12px;color:var(--parchment-dim);margin-bottom:4px;">
+            Technique modifier <span id="modLabel" style="color:var(--parchment);font-weight:bold;">+0</span> (range −4 to +5)
+          </div>
+          <div class="techrow">
+            <input type="range" id="modSlider" min="-4" max="5" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="stagebox" style="margin-top:12px;">
+          <span class="k">Final quality</span>
+          <span class="v"><span class="tier-badge" id="finalTierBadge">Q1</span></span>
+        </div>
+
+        <div class="tiermap" id="tiermap"></div>
+
+        <div class="heal-final">
+          <div class="amt" id="healAmt">4</div>
+          <div class="lbl">HP restored on eat</div>
+          <div class="sub" id="healSub"></div>
         </div>
       </div>
     </div>
-
-    <div class="panel" id="resultPanel"></div>
   </div>
+
+  <footer>Numbers are computed with the exact same shared formulas as the live game (FoodDefs.ComputeFlavor, MealDefs.CapIngredientTier, MealDefs.QualityTiers) — not an approximation.</footer>
 </div>
 
 <script>
-<script type="module">
-  
 const FLAVOR_TRAITS = ["Sweet","Savory","Sour","Bitter","Smoky","Spicy"];
 
-const INGREDIENTS = {
-  MantaMeat:        { label: "Manta Meat",        shape: { Savory:4, Smoky:1 } },
-  ReefFishFillet:   { label: "Reef Fish Fillet",  shape: { Savory:5, Sour:1 } },
-  SundropBerry:     { label: "Sundrop Berry",     shape: { Sweet:4, Sour:1 } },
-  WildrootTuber:    { label: "Wildroot Tuber",    shape: { Savory:3, Bitter:1 } },
-  HoneycombChunk:   { label: "Honeycomb Chunk",   shape: { Sweet:5, Savory:1 } },
-  SaltedJerkyStrip: { label: "Salted Jerky Strip",shape: { Savory:4, Smoky:1 } },
-  GlowcapMushroom:  { label: "Glowcap Mushroom",  shape: { Bitter:3, Savory:1 } },
-  BitterleafGreen:  { label: "Bitterleaf Green",  shape: { Bitter:5, Sour:1 } },
-  CitrusPod:        { label: "Citrus Pod",        shape: { Sour:5, Sweet:1 } },
-  EmberPepper:      { label: "Ember Pepper",      shape: { Spicy:5, Savory:1 } },
-  CustardFruit:     { label: "Custard Fruit",     shape: { Sweet:3, Savory:1 } },
+const TRAIT_COLOR = {
+  Sweet:"#e6a5c8", Savory:"#be8c5a", Sour:"#d2e664",
+  Bitter:"#6e9a5a", Smoky:"#82644f", Spicy:"#dc5a3c"
 };
 
 const ARCHETYPES = {
-  Sweet:  { label: "Sweet Treat" },
-  Savory: { label: "Hearty Meal" },
-  Sour:   { label: "Tangy Bite" },
-  Bitter: { label: "Bitter Brew" },
-  Smoky:  { label: "Smoked Plate" },
-  Spicy:  { label: "Spicy Skewer" },
+  Sweet:  { label:"Sweet Treat", color:"#ebaac8" },
+  Savory: { label:"Hearty Meal", color:"#be8c5a" },
+  Sour:   { label:"Tangy Bite",  color:"#d2e664" },
+  Bitter: { label:"Bitter Brew", color:"#6e9a5a" },
+  Smoky:  { label:"Smoked Plate",color:"#826450" },
+  Spicy:  { label:"Spicy Skewer",color:"#dc5a3c" }
 };
 
-const TIER_THRESHOLDS = [0,15,21,25,30,35,40,45,50,55]; // index0 = tier1
-const INGREDIENT_QUALITY_CAP = 5;
-const HEAL_PER_TIER = 2;
-
-const METHODS = {
-  Grill: { label: "Grilled", adjective: "Charred", delivery: "Hybrid", instantFraction: 0.4, hotDuration: 8 },
-  Fry:   { label: "Fried",   adjective: "Crispy",  delivery: "Instant" },
-  Boil:  { label: "Boiled",  adjective: "Tender",  delivery: "OverTime", hotDuration: 18 },
+const INGREDIENTS = {
+  MantaMeat:       { label:"Manta Meat",         color:"#b45a5a", flavorShape:{Savory:4, Smoky:1} },
+  ReefFishFillet:  { label:"Reef Fish Fillet",   color:"#b4c8d7", flavorShape:{Savory:5, Sour:1} },
+  SundropBerry:    { label:"Sundrop Berry",      color:"#f08c28", flavorShape:{Sweet:4, Sour:1} },
+  WildrootTuber:   { label:"Wildroot Tuber",     color:"#64462d", flavorShape:{Savory:3, Bitter:1} },
+  HoneycombChunk:  { label:"Honeycomb Chunk",    color:"#ebbe28", flavorShape:{Sweet:5, Savory:1} },
+  SaltedJerkyStrip:{ label:"Salted Jerky Strip", color:"#782d23", flavorShape:{Savory:4, Smoky:1} },
+  GlowcapMushroom: { label:"Glowcap Mushroom",   color:"#5adcd2", flavorShape:{Bitter:3, Savory:1} },
+  BitterleafGreen: { label:"Bitterleaf Green",   color:"#3c823c", flavorShape:{Bitter:5, Sour:1} },
+  CitrusPod:       { label:"Citrus Pod",         color:"#c8e13c", flavorShape:{Sour:5, Sweet:1} },
+  EmberPepper:     { label:"Ember Pepper",       color:"#dc3228", flavorShape:{Spicy:5, Savory:1} },
+  CustardFruit:    { label:"Custard Fruit",      color:"#c8aadc", flavorShape:{Sweet:3, Savory:1} },
 };
 
-const BUFF_CATEGORY = {
-  Savory: "Vitality", Sweet: "Energy", Spicy: "Haste",
-  Sour: "Resistance", Bitter: "Focus", Smoky: "Fortitude",
-};
-const BUFF_LABEL = { Vitality:"Vitality", Energy:"Energy", Haste:"Haste", Resistance:"Resistance", Focus:"Focus", Fortitude:"Fortitude" };
-const MAGNITUDE_FORMULAS = {
-  Vitality:   t => t*4,
-  Energy:     t => 1 + t*0.03,
-  Haste:      t => 1 + t*0.015,
-  Resistance: t => t*0.03,
-  Focus:      t => t*0.03,
-  Fortitude:  t => t*0.03,
-};
-const METHOD_MAG_MULT = { Grill:1.0, Fry:1.2, Boil:0.9 };
-const METHOD_DUR_MULT = { Grill:1.0, Fry:0.7, Boil:1.3 };
-function baseDurationForTier(t){ return 60 + t*24; }
+// -- Shared formulas, mirrored exactly from the live scripts --
 
-const BUFF_EFFECT_TEXT = {
-  Vitality: "extra max health",
-  Energy: "faster stamina regen",
-  Haste: "faster movement speed",
-  Resistance: "less fall damage",
-  Focus: "bonus mining and harvesting damage",
-  Fortitude: "less damage taken overall",
-};
-
-let state = {
-  slots: [
-    { ingredient: "EmberPepper", quality: 7 },
-    { ingredient: "SaltedJerkyStrip", quality: 6 },
-    { ingredient: "none", quality: 5 },
-  ],
-  method: "Grill",
-  modifier: 0,
-};
+function totalFlavorForQuality(q){ return q + 2; } // FoodDefs
 
 function computeFlavor(baseId, quality){
   const def = INGREDIENTS[baseId];
-  if(!def) return null;
-  quality = Math.max(1, Math.min(10, quality));
-  const total = quality + 2;
-  const traitsInOrder = FLAVOR_TRAITS.filter(t => def.shape[t] !== undefined);
-  const weightSum = traitsInOrder.reduce((s,t) => s + def.shape[t], 0);
-  const flavor = {};
-  let assigned = 0;
-  traitsInOrder.forEach((trait, i) => {
-    if(i === traitsInOrder.length - 1){
-      flavor[trait] = total - assigned;
+  if (!def) return {};
+  const total = totalFlavorForQuality(quality);
+  const traitsInOrder = FLAVOR_TRAITS.filter(t => def.flavorShape[t] != null);
+  const weightSum = traitsInOrder.reduce((s,t)=> s + def.flavorShape[t], 0);
+  const result = {};
+  let allocated = 0;
+  traitsInOrder.forEach((t, i) => {
+    if (i === traitsInOrder.length - 1){
+      result[t] = total - allocated;
     } else {
-      const share = Math.floor(total * (def.shape[trait] / weightSum) + 0.5);
-      flavor[trait] = share;
-      assigned += share;
+      const share = Math.floor(total * (def.flavorShape[t] / weightSum) + 0.5);
+      result[t] = share;
+      allocated += share;
     }
   });
-  return flavor;
+  return result;
 }
 
-function qualityForTotal(sum){
-  let best = 1;
-  for(let tier = 1; tier <= 10; tier++){
-    if(sum >= TIER_THRESHOLDS[tier-1]) best = tier;
+const QUALITY_TIER_THRESHOLDS = [
+  {tier:1,minTotal:0},{tier:2,minTotal:7},{tier:3,minTotal:14},{tier:4,minTotal:21},{tier:5,minTotal:28},
+  {tier:6,minTotal:35},{tier:7,minTotal:42},{tier:8,minTotal:49},{tier:9,minTotal:56},{tier:10,minTotal:63},
+];
+const INGREDIENT_QUALITY_CAP = 5; // MealDefs
+const QUALITY_HEAL_BONUS_PER_TIER = 4; // MealDefs — lowered from 7
+const MIN_TECHNIQUE_MODIFIER = -4, MAX_TECHNIQUE_MODIFIER = 5; // CookServer
+
+function tierFromTotal(total){
+  let best = QUALITY_TIER_THRESHOLDS[0];
+  for (const t of QUALITY_TIER_THRESHOLDS){
+    if (total >= t.minTotal) best = t;
   }
-  return best;
+  return best.tier;
 }
+function healForTier(tier){ return Math.floor(QUALITY_HEAL_BONUS_PER_TIER * tier + 0.5); }
 
-function render(){
-  renderSlots();
-  renderMethodButtons();
-  document.getElementById("modVal").textContent = (state.modifier > 0 ? "+" : "") + state.modifier;
-  computeAndRenderResult();
-}
+// -- UI --
 
-function renderSlots(){
-  const container = document.getElementById("slots");
-  container.innerHTML = "";
-  state.slots.forEach((slot, idx) => {
-    const row = document.createElement("div");
-    row.className = "slot-row";
-    const options = ['<option value="none">— empty —</option>']
-      .concat(Object.keys(INGREDIENTS).map(id =>
-        `<option value="${id}" ${slot.ingredient===id?"selected":""}>${INGREDIENTS[id].label}</option>`));
-    row.innerHTML = `
-      <div class="slot-num">${idx+1}</div>
-      <div class="slot-select"><select data-idx="${idx}" class="ingredient-select">${options.join("")}</select></div>
-      <div class="qty-wrap">
-        <input type="range" min="1" max="10" step="1" value="${slot.quality}" class="quality-slider" data-idx="${idx}">
-        <div class="qty-val">Q${slot.quality}</div>
+const slotState = [
+  { id:"MantaMeat", q:5 },
+  { id:"EmberPepper", q:5 },
+  { id:"HoneycombChunk", q:5 },
+];
+
+const slotsEl = document.getElementById("slots");
+function buildSlots(){
+  slotsEl.innerHTML = "";
+  slotState.forEach((slot, idx) => {
+    const div = document.createElement("div");
+    div.className = "slot";
+    const opts = Object.keys(INGREDIENTS).map(k =>
+      `<option value="${k}" ${k===slot.id?"selected":""}>${INGREDIENTS[k].label}</option>`
+    ).join("");
+    div.innerHTML = `
+      <div class="slot-label">Slot ${idx+1}</div>
+      <select data-idx="${idx}" class="ingSelect">${opts}</select>
+      <div class="qrow">
+        <span>Quality</span>
+        <input type="range" min="1" max="10" step="1" value="${slot.q}" class="qSlider" data-idx="${idx}">
+        <span class="qval" data-idx="${idx}">${slot.q}</span>
+      </div>
+      <div class="swatch-row">
+        <span class="swatch" style="background:${INGREDIENTS[slot.id].color}"></span>
+        <span>${Object.entries(INGREDIENTS[slot.id].flavorShape).map(([t,w])=>`${t} ${w}`).join(" · ")}</span>
       </div>
     `;
-    container.appendChild(row);
+    slotsEl.appendChild(div);
   });
-  container.querySelectorAll(".ingredient-select").forEach(el => {
-    el.addEventListener("change", e => {
-      state.slots[+e.target.dataset.idx].ingredient = e.target.value;
-      render();
+
+  slotsEl.querySelectorAll(".ingSelect").forEach(sel => {
+    sel.addEventListener("change", e => {
+      slotState[+e.target.dataset.idx].id = e.target.value;
+      buildSlots();
+      recompute();
     });
   });
-  container.querySelectorAll(".quality-slider").forEach(el => {
-    el.addEventListener("input", e => {
-      const idx = +e.target.dataset.idx;
-      const val = +e.target.value;
-      state.slots[idx].quality = val;
-      const row = e.target.closest(".slot-row");
-      row.querySelector(".qty-val").textContent = "Q" + val;
-      computeAndRenderResult();
+  slotsEl.querySelectorAll(".qSlider").forEach(sl => {
+    sl.addEventListener("input", e => {
+      slotState[+e.target.dataset.idx].q = +e.target.value;
+      slotsEl.querySelector(`.qval[data-idx="${e.target.dataset.idx}"]`).textContent = e.target.value;
+      recompute();
     });
   });
 }
 
-function renderMethodButtons(){
-  const container = document.getElementById("methodBtns");
-  container.innerHTML = "";
-  Object.keys(METHODS).forEach(m => {
-    const btn = document.createElement("div");
-    btn.className = "method-btn" + (state.method === m ? " active" : "");
-    btn.textContent = m;
-    btn.addEventListener("click", () => { state.method = m; render(); });
-    container.appendChild(btn);
-  });
+const flavorbarsEl = document.getElementById("flavorbars");
+const archetypeDot = document.getElementById("archetypeDot");
+const archetypeLabel = document.getElementById("archetypeLabel");
+const totalLine = document.getElementById("totalLine");
+const rawTierEl = document.getElementById("rawTier");
+const cappedTierEl = document.getElementById("cappedTier");
+const modSlider = document.getElementById("modSlider");
+const modLabel = document.getElementById("modLabel");
+const finalTierBadge = document.getElementById("finalTierBadge");
+const tiermapEl = document.getElementById("tiermap");
+const healAmt = document.getElementById("healAmt");
+const healSub = document.getElementById("healSub");
+
+modSlider.addEventListener("input", recompute);
+
+function tierColor(tier){
+  // low tiers muddier, high tiers brighter ember -> teal blend
+  const stops = ["#8a6a4a","#9a7a4a","#ab8a48","#bf9840","#d9a238",
+                 "#e0973a","#e08a44","#dc7a52","#d66a63","#5fb3a3"];
+  return stops[Math.max(0,Math.min(9,tier-1))];
 }
 
-document.getElementById("modSlider").addEventListener("input", e => {
-  state.modifier = +e.target.value;
-  document.getElementById("modVal").textContent = (state.modifier > 0 ? "+" : "") + state.modifier;
-  computeAndRenderResult();
-});
-
-
-function computeAndRenderResult(){
-  const panel = document.getElementById("resultPanel");
-
+function recompute(){
   const combined = {};
   FLAVOR_TRAITS.forEach(t => combined[t] = 0);
-  let total = 0;
-  let filledCount = 0;
-  state.slots.forEach(slot => {
-    if(slot.ingredient === "none") return;
-    filledCount++;
-    const flavor = computeFlavor(slot.ingredient, slot.quality);
-    FLAVOR_TRAITS.forEach(t => {
-      combined[t] += (flavor[t] || 0);
-      total += (flavor[t] || 0);
-    });
-  });
-  const anyIngredient = filledCount > 0;
-  const totalSlots = state.slots.length;
-
-  if(!anyIngredient){
-    panel.innerHTML = `<div class="result-tag">Result</div><div class="dish-name">Add an ingredient</div><div class="dish-sub">Pick at least one ingredient to see the finished dish.</div>`;
-    return;
-  }
-
-  // dominant trait, ties broken by canonical order (first max wins)
-  let archetypeTrait = FLAVOR_TRAITS[0];
-  let bestValue = -Infinity;
-  FLAVOR_TRAITS.forEach(t => {
-    if(combined[t] > bestValue){ bestValue = combined[t]; archetypeTrait = t; }
+  slotState.forEach(slot => {
+    const f = computeFlavor(slot.id, slot.q);
+    Object.entries(f).forEach(([t,v]) => combined[t] += v);
   });
 
-  const rawTier = qualityForTotal(total);
-  const baseTier = Math.min(rawTier, INGREDIENT_QUALITY_CAP);
-
-  let effectiveModifier = state.modifier;
-  if(state.modifier > 0){
-    const scale = baseTier / INGREDIENT_QUALITY_CAP;
-    effectiveModifier = Math.floor(state.modifier * scale + 0.5);
-  }
-  const finalTier = Math.max(1, Math.min(10, baseTier + effectiveModifier));
-  const healAmount = HEAL_PER_TIER * finalTier;
-
-  const methodDef = METHODS[state.method];
-  const archetypeDef = ARCHETYPES[archetypeTrait];
-  const category = BUFF_CATEGORY[archetypeTrait];
-  const magnitude = MAGNITUDE_FORMULAS[category](finalTier) * METHOD_MAG_MULT[state.method];
-  const duration = baseDurationForTier(finalTier) * METHOD_DUR_MULT[state.method];
-
-  let magnitudeText;
-  if(category === "Vitality") magnitudeText = "+" + Math.round(magnitude) + " max health";
-  else if(category === "Energy") magnitudeText = "x" + magnitude.toFixed(2) + " stamina regen";
-  else if(category === "Haste") magnitudeText = "x" + magnitude.toFixed(2) + " move speed";
-  else magnitudeText = Math.round(magnitude*100) + "% " + BUFF_EFFECT_TEXT[category];
-
-  let deliveryText;
-  if(methodDef.delivery === "Instant") deliveryText = `Heal ${healAmount} HP instantly.`;
-  else if(methodDef.delivery === "Hybrid"){
-    const instant = Math.round(healAmount * methodDef.instantFraction);
-    const rest = healAmount - instant;
-    deliveryText = `Heal ${instant} HP instantly, then ${rest} HP over ${methodDef.hotDuration}s.`;
-  } else {
-    deliveryText = `Heal ${healAmount} HP over ${methodDef.hotDuration}s.`;
-  }
-
-  // tier bar: 10 segments. Gold = what the ingredients themselves earned
-  // (up to baseTier, capped at Q5). Rust = whatever technique added on top
-  // of that, up to finalTier. Anything above finalTier stays empty.
-  let segs = "";
-  for(let i=1;i<=10;i++){
-    let cls = "tier-seg";
-    if(i <= baseTier) cls += " base-fill";
-    else if(i <= finalTier) cls += " bonus-fill";
-    segs += `<div class="${cls}"></div>`;
-  }
-
-  const flavorMax = Math.max(...FLAVOR_TRAITS.map(t => combined[t]), 1);
-  let flavorBars = "";
-  FLAVOR_TRAITS.forEach(t => {
-    const pct = Math.round((combined[t] / flavorMax) * 100);
-    const isDom = t === archetypeTrait;
-    flavorBars += `
-      <div class="flavor-row">
-        <div class="flavor-label">${t}</div>
-        <div class="flavor-track"><div class="flavor-fill${isDom?' dominant':''}" style="width:${pct}%;"></div></div>
-        <div class="flavor-num">${combined[t]}</div>
-      </div>`;
-  });
-
-  let noticeHtml = "";
-  if(filledCount < totalSlots){
-    const missing = totalSlots - filledCount;
-    const ingredientWord = filledCount === 1 ? "ingredient" : "ingredients";
-    const missingWord = missing === 1 ? "ingredient" : "ingredients";
-    noticeHtml = `
-      <div class="notice-box">
-        <div class="notice-icon">!</div>
-        <div>You're missing ${missing} ${missingWord}. This result is based on just <b>${filledCount} ${ingredientWord}</b> — add ${missing === 1 ? "one more" : "more"} to see the full dish.</div>
-      </div>`;
-  }
-
-  panel.innerHTML = `
-    ${noticeHtml}
-    <div class="result-tag">${methodDef.adjective} · Q${finalTier}</div>
-    <div class="dish-name">${archetypeDef.label}</div>
-    <div class="dish-sub">${methodDef.label} · total flavor ${total}</div>
-
-    <div class="tier-track">${segs}</div>
-    <div class="tier-caption"><span><span style="color:var(--gold);">■</span> ingredients (cap Q${INGREDIENT_QUALITY_CAP})</span><span><span style="color:var(--rust);">■</span> technique</span></div>
-
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-label">Base tier (ingredients)</div><div class="stat-value">Q${baseTier}</div></div>
-      <div class="stat-card"><div class="stat-label">Final tier</div><div class="stat-value">Q${finalTier}</div></div>
-      <div class="stat-card"><div class="stat-label">Technique effect</div><div class="stat-value">${effectiveModifier >= 0 ? "+" : ""}${effectiveModifier}</div></div>
-      <div class="stat-card"><div class="stat-label">Heal amount</div><div class="stat-value">${healAmount} HP</div></div>
+  const maxVal = Math.max(1, ...Object.values(combined));
+  flavorbarsEl.innerHTML = FLAVOR_TRAITS.map(t => `
+    <div class="flavorbar-row">
+      <span class="fname">${t}</span>
+      <div class="flavorbar-track"><div class="flavorbar-fill" style="width:${(combined[t]/maxVal)*100}%; background:${TRAIT_COLOR[t]}"></div></div>
+      <span class="fval">${combined[t]}</span>
     </div>
+  `).join("");
 
-    <div class="heal-box"><b>Delivery:</b> ${deliveryText}</div>
+  let bestTrait = FLAVOR_TRAITS[0], bestVal = -Infinity;
+  FLAVOR_TRAITS.forEach(t => { if (combined[t] > bestVal){ bestVal = combined[t]; bestTrait = t; } });
+  const archetype = ARCHETYPES[bestTrait];
+  archetypeDot.style.background = archetype.color;
+  archetypeLabel.textContent = archetype.label;
 
-    <div class="buff-box" style="margin-top:14px;">
-      <div class="label">Well fed buff</div>
-      <div class="value">${BUFF_LABEL[category]}, ${magnitudeText}</div>
-      <div class="sub">Lasts ${Math.round(duration)}s</div>
-    </div>
+  const total = FLAVOR_TRAITS.reduce((s,t)=> s + combined[t], 0);
+  totalLine.textContent = `Total flavor: ${total}`;
 
-    <div class="flavor-bars">${flavorBars}</div>
-  `;
+  const rawTier = tierFromTotal(total);
+  const cappedTier = Math.min(rawTier, INGREDIENT_QUALITY_CAP);
+  rawTierEl.textContent = `Q${rawTier}${rawTier>INGREDIENT_QUALITY_CAP ? " (would be, uncapped)" : ""}`;
+  cappedTierEl.textContent = `Q${cappedTier}`;
+  cappedTierEl.style.background = tierColor(cappedTier);
+
+  const mod = +modSlider.value;
+  modLabel.textContent = (mod>0?"+":"") + mod;
+  modLabel.style.color = mod>0?"#8fd98f": mod<0?"#e08a7a":"var(--parchment)";
+
+  const finalTier = Math.max(1, Math.min(10, cappedTier + mod));
+  finalTierBadge.textContent = `Q${finalTier}`;
+  finalTierBadge.style.background = tierColor(finalTier);
+
+  tiermapEl.innerHTML = Array.from({length:10}, (_,i)=>i+1).map(t =>
+    `<div class="${t===finalTier?"hit":""}">${t}</div>`
+  ).join("");
+
+  const heal = healForTier(finalTier);
+  healAmt.textContent = heal;
+  healSub.textContent = `Q${finalTier} meal · ${QUALITY_HEAL_BONUS_PER_TIER} HP per tier (was 7 before the rebalance) · max possible is now ${healForTier(10)} HP at Q10`;
 }
 
-render();
+buildSlots();
+recompute();
 </script>
 </body>
 </html>

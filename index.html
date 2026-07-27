@@ -365,42 +365,7 @@ select{
 
 <script>
 <script type="module">
-import { DiscordSDK } from "https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.5.0/+esm";
-
-const DISCORD_CLIENT_ID = "1531182655092297868";
-
-let discordSdk = null;
-let runningInsideDiscord = false;
-
-async function initializeDiscord() {
-  const query = new URLSearchParams(window.location.search);
-
-  // Discord includes frame_id when loading the page as an Activity.
-  runningInsideDiscord = query.has("frame_id");
-
-  if (!runningInsideDiscord) {
-    console.log("Running as a normal website preview.");
-    return;
-  }
-
-  try {
-    discordSdk = new DiscordSDK(DISCORD_CLIENT_ID);
-
-    // Wait for Discord to send the READY payload.
-    await discordSdk.ready();
-
-    console.log("Discord Embedded App SDK connected successfully.");
-    console.log("Activity instance:", discordSdk.instanceId);
-
-    document.body.dataset.discordConnected = "true";
-  } catch (error) {
-    console.error("Discord SDK connection failed:", error);
-    document.body.dataset.discordConnected = "false";
-  }
-}
-
-await initializeDiscord();
-
+  
 const FLAVOR_TRAITS = ["Sweet","Savory","Sour","Bitter","Smoky","Spicy"];
 
 const INGREDIENTS = {
